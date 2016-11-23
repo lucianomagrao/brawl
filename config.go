@@ -80,7 +80,7 @@ func (c *Configuration) readConfigFileFromDisk(fileName string, t interface{}) {
 			log.Fatalln("Ocorreu um erro ao ler o arquivo de configuração.")
 		}
 		file, _ = os.Create(path)
-		configJson, _ := json.Marshal(t)
+		configJson, _ := json.MarshalIndent(t, "", " ")
 		_, err = file.Write(configJson)
 		file, _ = os.Open(path)
 	}
@@ -97,7 +97,7 @@ func (c *Configuration) saveConfigToDisk() {
 }
 
 func (c *Configuration) saveJsonToDisk(i interface{}, path string) {
-	h, err := json.Marshal(i)
+	h, err := json.MarshalIndent(i, "", " ")
 	if err != nil {
 		log.Fatalln("Não foi possivel fazer o parse das configurações", err)
 	}
