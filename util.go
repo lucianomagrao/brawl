@@ -15,13 +15,12 @@ import (
 
 const (
 	dockerRegistryLocalEnv = "DOCKER_REGISTRY"
+	dockerRegistryMirror   = "docker-web.softplan.com.br"
 )
 
 var (
-	dockerArgs           []string
-	dockerComposeArgs    []string
-	dockerRegistryMirror string = "docker-web.softplan.com.br"
-	dockerRegistry       string = os.Getenv(dockerRegistryLocalEnv)
+	dockerArgs, dockerComposeArgs []string
+	dockerRegistry                string = os.Getenv(dockerRegistryLocalEnv)
 )
 
 func createComposeProjectContext() project.Context {
@@ -62,6 +61,7 @@ func updateServicesImage(dockerCompose *project.Project) {
 	if len(dockerRegistry) == 0 {
 		fmt.Printf("Variavel %s não foi setada, as imagens serão baixadas diretamente de %s podendo causar lentidão.\n", dockerRegistryLocalEnv, dockerRegistryMirror)
 		dockerRegistry = dockerRegistryMirror
+		os.Setenv(dockerRegistryLocalEnv, dockerRegistryMirror)
 	}
 	for _, name := range dockerCompose.ServiceConfigs.Keys() {
 		createCacheServiceImage(name, dockerCompose)
@@ -81,7 +81,8 @@ func createCacheServiceImage(name string, dockerCompose *project.Project) {
 		"${", "",
 		"}", "",
 		strings.ToUpper(name)+"_VERSION", getServiceVersionFromProperties(name),
-		dockerRegistryLocalEnv, dockerRegistry)
+		dockerRegistryLocalEnv, dockerRegistry,
+	)
 	img := repl.Replace(service.Image)
 	pl := execDockerCommandAndWait("pull", img)
 	if pl > 0 && dockerRegistry != dockerRegistryMirror {
@@ -107,7 +108,7 @@ func pullImage(img string) {
 	}
 }
 
-func tagImage(img string, tag string) {
+func tagImage(img, tag string) {
 	ec := execDockerCommandAndWait("tag", img, tag)
 	if ec > 0 {
 		log.Fatalf("Não foi possivel criar a tag para a imagem %s", img)
@@ -122,13 +123,13 @@ func removeImage(img string) {
 }
 
 func execDockerCommandAndWait(args ...string) int {
-	dockerArgs = append(dockerArgs, args...)
-	return execCommandAndWait("docker", dockerArgs...)
+	runArgs := append(dockerArgs, args...)
+	return execCommandAndWait("docker", runArgs...)
 }
 
 func execComposeCommandAndWait(args ...string) int {
-	dockerComposeArgs = append(dockerComposeArgs, args...)
-	return execCommandAndWait("docker-compose", dockerComposeArgs...)
+	runArgs := append(dockerComposeArgs, args...)
+	return execCommandAndWait("docker-compose", runArgs...)
 }
 
 func execCommandAndWait(location string, command ...string) int {

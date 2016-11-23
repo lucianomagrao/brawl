@@ -15,7 +15,7 @@ func main() {
 	app.Authors = []cli.Author{
 		{
 			Name:  "Luciano Mores",
-			Email: "leslau@gmail.com",
+			Email: "luciano.mores@softplan.com.br",
 		},
 	}
 

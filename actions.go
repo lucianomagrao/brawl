@@ -25,23 +25,11 @@ func executeDockerComposeCmd(c *cli.Context) error {
 
 func defineDockerHostCommand(c *cli.Context) error {
 	if len(host) > 0 {
-		dockerArgs = append(
-			dockerArgs,
-			"--tls",
-			"-H",
-			"tcp://"+host,
-		)
-		dockerComposeArgs = append(
-			dockerComposeArgs,
-			"-H",
-			"tcp://"+host,
-		)
+		dockerArgs = append(dockerArgs, "--tls", "-H", "tcp://"+host)
+		dockerComposeArgs = append(dockerComposeArgs, "-H", "tcp://"+host)
 	}
 	if len(certsPath) > 0 {
-		certsArgs := []string{
-			"--tlscert=" + certsPath + "/cert.pem",
-			"--tlskey=" + certsPath + "/key.pem",
-		}
+		certsArgs := []string{"--tlscert=" + certsPath + "/cert.pem", "--tlskey=" + certsPath + "/key.pem"}
 		dockerComposeArgs = append(dockerComposeArgs, certsArgs...)
 		dockerArgs = append(dockerArgs, certsArgs...)
 	}
@@ -51,10 +39,7 @@ func defineDockerHostCommand(c *cli.Context) error {
 func deployAction(c *cli.Context) error {
 	dockerCompose := parseDockerCompose()
 	updateServicesImage(dockerCompose)
-	args := []string{
-		"up",
-		"-d",
-	}
+	args := []string{"up", "-d"}
 	args = append(args, c.Args()...)
 	execComposeCommandAndWait(args...)
 	return nil
