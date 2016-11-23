@@ -29,5 +29,7 @@ func main() {
 
 	sort.Sort(cli.FlagsByName(app.Flags))
 
+	cfg := LoadConfig()
 	app.Run(os.Args)
+	cfg.saveConfigToDisk()
 }
