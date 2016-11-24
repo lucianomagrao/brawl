@@ -34,6 +34,30 @@ func getCommands() []cli.Command {
 			Action:          executeDockerComposeCmd,
 		},
 		{
+			Name:  "host",
+			Usage: "Gerencia hosts",
+			Subcommands: []cli.Command{
+				{
+					Name:   "ls",
+					Usage:  "Lista hosts cadastrados",
+					Action: listHosts,
+					Flags:  getLsFlags(),
+				},
+				{
+					Name:      "rm",
+					ArgsUsage: "[hosts...]",
+					Usage:     "Remove host",
+					Action:    removeHost,
+				},
+				{
+					Name:      "create",
+					ArgsUsage: "[ip porta]",
+					Usage:     "Cria novo host",
+					Action:    createHost,
+				},
+			},
+		},
+		{
 			Name:   "versions",
 			Usage:  "Exibe as versões das aplicações",
 			Action: showVersionsAction,

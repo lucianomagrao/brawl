@@ -9,7 +9,7 @@ import (
 
 var (
 	workingDir, host, certsPath string
-	debug                       bool
+	quiet                       bool
 )
 
 func getFlags() []cli.Flag {
@@ -29,6 +29,16 @@ func getFlags() []cli.Flag {
 			Name:        "certs, c",
 			Usage:       "Caminho onde contem os arquivos de certificado e key para acesso ao Host definido",
 			Destination: &certsPath,
+		},
+	}
+}
+
+func getLsFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.BoolFlag{
+			Name:        "q",
+			Usage:       "Lista somente ips dos hosts",
+			Destination: &quiet,
 		},
 	}
 }

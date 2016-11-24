@@ -53,6 +53,20 @@ func (c *Configuration) removeApp(a App) {
 	}
 }
 
+func (c *Configuration) addHost(h Host) {
+	c.Hosts = append(c.Hosts, h)
+}
+
+func (c *Configuration) removeHost(h Host) {
+	for i := len(c.Hosts) - 1; i >= 0; i-- {
+		host := c.Hosts[i]
+		if host.Ip == h.Ip {
+			c.Hosts = append(c.Hosts[:i], c.Hosts[i+1:]...)
+			return
+		}
+	}
+}
+
 func (a *App) addHost(h Host) {
 	a.Hosts = append(a.Hosts, h)
 }

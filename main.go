@@ -8,7 +8,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "Brawl!"
+	app.Name = "brawl"
 	app.Version = "1.0.0"
 	app.Usage = "Deploy de aplicações docker da Softplan."
 
@@ -28,8 +28,5 @@ func main() {
 	app.Commands = getCommands()
 
 	sort.Sort(cli.FlagsByName(app.Flags))
-
-	cfg := LoadConfig()
 	app.Run(os.Args)
-	cfg.saveConfigToDisk()
 }
