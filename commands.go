@@ -51,7 +51,7 @@ func getCommands() []cli.Command {
 				},
 				{
 					Name:      "create",
-					ArgsUsage: "[ip porta]",
+					ArgsUsage: "[ip] [porta]",
 					Usage:     "Cria novo host",
 					Action:    createHost,
 				},

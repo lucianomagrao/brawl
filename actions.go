@@ -76,10 +76,16 @@ var ListHostTemplate = `IP{{"\t\t\t"}}PORT{{range .Hosts}}
 {{.Ip}}{{"\t\t\t"}}{{.Port}}{{end}}
 `
 
+var ListHostTeplateQuiet = `{{range .Hosts}}{{.Ip}}{{"\n"}}{{end}}`
+
 func listHosts(c *cli.Context) error {
 	cfg := LoadConfig()
 	w := tabwriter.NewWriter(os.Stdout, 1, 8, 2, ' ', 0)
-	t := template.Must(template.New("ls").Parse(ListHostTemplate))
+	tp := ListHostTemplate
+	if quiet {
+		tp = ListHostTeplateQuiet
+	}
+	t := template.Must(template.New("ls").Parse(tp))
 	err := t.Execute(w, cfg)
 	if err != nil {
 		return fmt.Errorf("Ocorreu um erro: %s", err)
@@ -94,13 +100,15 @@ func removeHost(c *cli.Context) error {
 		return fmt.Errorf("\"brawl host rm\" requer um parametro")
 	}
 	cfg := LoadConfig()
-	for _, h := range cfg.Hosts {
-		if h.Ip == args.First() {
-			cfg.removeHost(h)
-			cfg.saveConfigToDisk()
-			fmt.Println(h.Ip)
+	for _, a := range args {
+		for _, h := range cfg.Hosts {
+			if h.Ip == a {
+				cfg.removeHost(h)
+				fmt.Println(h.Ip)
+			}
 		}
 	}
+	cfg.saveConfigToDisk()
 	return nil
 }
 
