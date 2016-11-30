@@ -78,8 +78,8 @@ var ListHostTemplate = `IP{{"\t\t\t"}}PORT{{range .Hosts}}
 
 var ListHostTeplateQuiet = `{{range .Hosts}}{{.Ip}}{{"\n"}}{{end}}`
 
-var ListAppTemplate = `NAME{{"\t\t\t"}}DIR{{range .Apps}}
-{{.Name}}{{"\t\t\t"}}{{.Dir}}{{end}}
+var ListAppTemplate = `NAME{{"\t\t\t"}}DIR{{"\t\t\t"}}HOSTS{{range .Apps}}
+{{.Name}}{{"\t\t\t"}}{{.Dir}}{{"\t\t\t"}}{{range .Hosts}}{{.Ip}} {{end}}{{end}}
 `
 
 var ListAppTeplateQuiet = `{{range .Apps}}{{.Name}}{{"\n"}}{{end}}`
