@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	cfgFolder string = filepath.Join(os.Getenv("HOME"), ".brawl")
+	cfgFolder string = filepath.Join(os.Getenv("HOME"), cfgFolderName)
 )
 
 func LoadConfig() *Configuration {

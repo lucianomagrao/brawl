@@ -58,6 +58,30 @@ func getCommands() []cli.Command {
 			},
 		},
 		{
+			Name:  "app",
+			Usage: "Gerencia apps",
+			Subcommands: []cli.Command{
+				{
+					Name:   "ls",
+					Usage:  "Lista apps cadastrados",
+					Action: listApps,
+					Flags:  getLsFlags(),
+				},
+				{
+					Name:      "rm",
+					ArgsUsage: "[apps...]",
+					Usage:     "Remove apps",
+					Action:    removeApp,
+				},
+				{
+					Name:      "create",
+					ArgsUsage: "[name] [dir]",
+					Usage:     "Cria novo app",
+					Action:    createApp,
+				},
+			},
+		},
+		{
 			Name:   "versions",
 			Usage:  "Exibe as versões das aplicações",
 			Action: showVersionsAction,

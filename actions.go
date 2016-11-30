@@ -78,12 +78,26 @@ var ListHostTemplate = `IP{{"\t\t\t"}}PORT{{range .Hosts}}
 
 var ListHostTeplateQuiet = `{{range .Hosts}}{{.Ip}}{{"\n"}}{{end}}`
 
+var ListAppTemplate = `NAME{{"\t\t\t"}}DIR{{range .Apps}}
+{{.Name}}{{"\t\t\t"}}{{.Dir}}{{end}}
+`
+
+var ListAppTeplateQuiet = `{{range .Apps}}{{.Name}}{{"\n"}}{{end}}`
+
 func listHosts(c *cli.Context) error {
+	return list(ListHostTemplate, ListHostTeplateQuiet)
+}
+
+func listApps(c *cli.Context) error {
+	return list(ListAppTemplate, ListAppTeplateQuiet)
+}
+
+func list(tmpl string, qtmpl string) error {
 	cfg := LoadConfig()
 	w := tabwriter.NewWriter(os.Stdout, 1, 8, 2, ' ', 0)
-	tp := ListHostTemplate
+	tp := tmpl
 	if quiet {
-		tp = ListHostTeplateQuiet
+		tp = qtmpl
 	}
 	t := template.Must(template.New("ls").Parse(tp))
 	err := t.Execute(w, cfg)
@@ -91,6 +105,24 @@ func listHosts(c *cli.Context) error {
 		return fmt.Errorf("Ocorreu um erro: %s", err)
 	}
 	w.Flush()
+	return nil
+}
+
+func removeApp(c *cli.Context) error {
+	args := c.Args()
+	if len(args.First()) == 0 {
+		return fmt.Errorf("\"brawl app rm\" requer um parametro")
+	}
+	cfg := LoadConfig()
+	for _, a := range args {
+		for _, h := range cfg.Apps {
+			if h.Name == a {
+				cfg.removeApp(h)
+				fmt.Println(h.Name)
+			}
+		}
+	}
+	cfg.saveConfigToDisk()
 	return nil
 }
 
@@ -130,5 +162,26 @@ func createHost(c *cli.Context) error {
 	cfg.addHost(host)
 	cfg.saveConfigToDisk()
 	fmt.Println(host.Ip)
+	return nil
+}
+
+func createApp(c *cli.Context) error {
+	args := c.Args()
+	app := App{
+		Name: args.Get(0),
+		Dir:  args.Get(1),
+	}
+	if len(app.Name) == 0 || len(app.Dir) == 0 {
+		return fmt.Errorf("\"brawl app create\" requer nome e diretório como parametros")
+	}
+	cfg := LoadConfig()
+	for _, h := range cfg.Apps {
+		if h.Name == app.Name {
+			return fmt.Errorf("App %s já está cadastrado", app.Name)
+		}
+	}
+	cfg.addApp(app)
+	cfg.saveConfigToDisk()
+	fmt.Println(app.Name)
 	return nil
 }

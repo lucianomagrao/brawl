@@ -9,7 +9,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "brawl"
-	app.Version = "1.0.0"
+	app.Version = "1.0.1"
 	app.Usage = "Deploy de aplicações docker da Softplan."
 
 	app.Authors = []cli.Author{
