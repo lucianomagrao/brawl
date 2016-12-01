@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/urfave/cli"
+	"strings"
 )
 
 func forceUpdateImages(c *cli.Context) error {
@@ -79,7 +80,7 @@ var ListHostTemplate = `IP{{"\t\t\t"}}PORT{{range .Hosts}}
 var ListHostTeplateQuiet = `{{range .Hosts}}{{.Ip}}{{"\n"}}{{end}}`
 
 var ListAppTemplate = `NAME{{"\t\t\t"}}DIR{{"\t\t\t"}}HOSTS{{range .Apps}}
-{{.Name}}{{"\t\t\t"}}{{.Dir}}{{"\t\t\t"}}{{range .Hosts}}{{.Ip}} {{end}}{{end}}
+{{.Name}}{{"\t\t\t"}}{{.Dir}}{{"\t\t\t"}}{{join .Hosts ", "}}{{end}}
 `
 
 var ListAppTeplateQuiet = `{{range .Apps}}{{.Name}}{{"\n"}}{{end}}`
@@ -93,13 +94,16 @@ func listApps(c *cli.Context) error {
 }
 
 func list(tmpl string, qtmpl string) error {
+	funcMap := template.FuncMap{
+		"join": strings.Join,
+	}
 	cfg := LoadConfig()
 	w := tabwriter.NewWriter(os.Stdout, 1, 8, 2, ' ', 0)
 	tp := tmpl
 	if quiet {
 		tp = qtmpl
 	}
-	t := template.Must(template.New("ls").Parse(tp))
+	t := template.Must(template.New("ls").Funcs(funcMap).Parse(tp))
 	err := t.Execute(w, cfg)
 	if err != nil {
 		return fmt.Errorf("Ocorreu um erro: %s", err)

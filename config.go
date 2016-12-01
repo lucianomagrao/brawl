@@ -16,7 +16,7 @@ type Configuration struct {
 type App struct {
 	Name  string
 	Dir   string
-	Hosts []Host
+	Hosts []string
 }
 
 type Host struct {
@@ -68,13 +68,13 @@ func (c *Configuration) removeHost(h Host) {
 }
 
 func (a *App) addHost(h Host) {
-	a.Hosts = append(a.Hosts, h)
+	a.Hosts = append(a.Hosts, h.Ip)
 }
 
 func (a *App) removeHost(h Host) {
 	for i := len(a.Hosts) - 1; i >= 0; i-- {
 		host := a.Hosts[i]
-		if host.Ip == h.Ip {
+		if host == h.Ip {
 			a.Hosts = append(a.Hosts[:i], a.Hosts[i+1:]...)
 			return
 		}
