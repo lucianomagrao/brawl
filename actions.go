@@ -28,8 +28,13 @@ func executeDockerComposeCmd(c *cli.Context) error {
 
 func defineDockerHostCommand(c *cli.Context) error {
 	if len(host) > 0 {
-		dockerArgs = append(dockerArgs, "--tls", "-H", "tcp://"+host)
+		dockerArgs = append(dockerArgs, "-H", "tcp://"+host)
 		dockerComposeArgs = append(dockerComposeArgs, "-H", "tcp://"+host)
+	}
+	if insecure {
+		os.Unsetenv("DOCKER_CERT_PATH")
+	} else {
+		dockerArgs = append(dockerArgs, "--tls")
 	}
 	if len(certsPath) > 0 {
 		certsArgs := []string{"--tlscert=" + certsPath + "/cert.pem", "--tlskey=" + certsPath + "/key.pem"}
