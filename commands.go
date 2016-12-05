@@ -79,6 +79,18 @@ func getCommands() []cli.Command {
 					Usage:     "Cria novo app",
 					Action:    createApp,
 				},
+				{
+					Name:      "add-host",
+					ArgsUsage: "[app] [host]",
+					Usage:     "Adiciona host ao app",
+					Action:    addHostToApp,
+				},
+				{
+					Name:      "rem-host",
+					ArgsUsage: "[app] [host]",
+					Usage:     "Remove host ao app",
+					Action:    removeHostFromApp,
+				},
 			},
 		},
 		{

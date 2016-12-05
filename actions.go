@@ -121,7 +121,10 @@ func removeApp(c *cli.Context) error {
 	for _, a := range args {
 		for _, h := range cfg.Apps {
 			if h.Name == a {
-				cfg.removeApp(h)
+				err := cfg.removeApp(h)
+				if err != nil {
+					return err
+				}
 				fmt.Println(h.Name)
 			}
 		}
@@ -139,7 +142,10 @@ func removeHost(c *cli.Context) error {
 	for _, a := range args {
 		for _, h := range cfg.Hosts {
 			if h.Ip == a {
-				cfg.removeHost(h)
+				err := cfg.removeHost(h)
+				if err != nil {
+					return err
+				}
 				fmt.Println(h.Ip)
 			}
 		}
@@ -158,12 +164,10 @@ func createHost(c *cli.Context) error {
 		return fmt.Errorf("\"brawl host create\" requer ip e porta como parametros")
 	}
 	cfg := LoadConfig()
-	for _, h := range cfg.Hosts {
-		if h.Ip == host.Ip {
-			return fmt.Errorf("Host %s já está cadastrado", host.Ip)
-		}
+	err := cfg.addHost(host)
+	if err != nil {
+		return err
 	}
-	cfg.addHost(host)
 	cfg.saveConfigToDisk()
 	fmt.Println(host.Ip)
 	return nil
@@ -179,13 +183,45 @@ func createApp(c *cli.Context) error {
 		return fmt.Errorf("\"brawl app create\" requer nome e diretório como parametros")
 	}
 	cfg := LoadConfig()
-	for _, h := range cfg.Apps {
-		if h.Name == app.Name {
-			return fmt.Errorf("App %s já está cadastrado", app.Name)
-		}
+	err := cfg.addApp(app)
+	if err != nil {
+		return err
 	}
-	cfg.addApp(app)
 	cfg.saveConfigToDisk()
 	fmt.Println(app.Name)
+	return nil
+}
+
+func addHostToApp(c *cli.Context) error {
+	args := c.Args()
+	a := args.Get(0)
+	h := args.Get(1)
+	if len(a) == 0 || len(h) == 0 {
+		return fmt.Errorf("\"brawl app add-host\" requer 2 parametros.")
+	}
+	cfg := LoadConfig()
+	err := cfg.addHostToApp(a, h)
+	if err != nil {
+		return err
+	}
+	fmt.Println(h)
+	cfg.saveConfigToDisk()
+	return nil
+}
+
+func removeHostFromApp(c *cli.Context) error {
+	args := c.Args()
+	a := args.Get(0)
+	h := args.Get(1)
+	if len(a) == 0 || len(h) == 0 {
+		return fmt.Errorf("\"brawl app rem-host\" requer 2 parametros.")
+	}
+	cfg := LoadConfig()
+	err := cfg.removeHostFromApp(a, h)
+	if err != nil {
+		return err
+	}
+	fmt.Println(h)
+	cfg.saveConfigToDisk()
 	return nil
 }
