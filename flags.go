@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	workingDir, host, certsPath string
-	quiet, insecure             bool
+	workingDir, host, certsPath, app string
+	quiet, insecure                  bool
 )
 
 func getFlags() []cli.Flag {
@@ -24,6 +24,11 @@ func getFlags() []cli.Flag {
 			Name:        "host, H",
 			Usage:       "Define o host a ser utilizado",
 			Destination: &host,
+		},
+		cli.StringFlag{
+			Name:        "app, a",
+			Usage:       "Define o app a ser utilizado",
+			Destination: &app,
 		},
 		cli.StringFlag{
 			Name:        "certs, c",
@@ -62,11 +67,4 @@ func getWorkingDir() string {
 		log.Fatalf("Diretório informado não existe: %v", workingDir)
 	}
 	return workingDir
-}
-
-func getHost() string {
-	if len(host) == 0 {
-		return "locahost"
-	}
-	return host
 }

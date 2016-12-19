@@ -10,7 +10,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "brawl"
 	app.Version = "1.0.1"
-	app.Usage = "Deploy de aplicações docker da Softplan."
+	app.Usage = "Deploy de aplicações docker."
 
 	app.Authors = []cli.Author{
 		{

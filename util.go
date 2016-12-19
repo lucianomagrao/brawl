@@ -14,13 +14,14 @@ import (
 )
 
 const (
-	dockerRegistryLocalEnv = "DOCKER_REGISTRY"
-	dockerRegistryMirror   = "docker-web.softplan.com.br"
+	dockerRegistryLocalEnv  = "DOCKER_REGISTRY"
+	dockerRegistryMirrorEnv = "DOCKER_REGISTRY_MIRROR"
 )
 
 var (
 	dockerArgs, dockerComposeArgs []string
 	dockerRegistry                string = os.Getenv(dockerRegistryLocalEnv)
+	dockerRegistryMirror          string = os.Getenv(dockerRegistryMirrorEnv)
 )
 
 func createComposeProjectContext() project.Context {

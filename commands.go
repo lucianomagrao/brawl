@@ -15,7 +15,7 @@ func getCommands() []cli.Command {
 		},
 		{
 			Name:   "update-images",
-			Usage:  "Faz update das imagens a partir do mirror da Softplan",
+			Usage:  "Faz update das imagens a partir do mirror",
 			Before: defineDockerHostCommand,
 			Action: forceUpdateImages,
 		},
@@ -80,16 +80,23 @@ func getCommands() []cli.Command {
 					Action:    createApp,
 				},
 				{
-					Name:      "add-host",
-					ArgsUsage: "[app] [host]",
-					Usage:     "Adiciona host ao app",
-					Action:    addHostToApp,
-				},
-				{
-					Name:      "rem-host",
-					ArgsUsage: "[app] [host]",
-					Usage:     "Remove host ao app",
-					Action:    removeHostFromApp,
+					Name:      "manage",
+					ArgsUsage: "[app]",
+					Usage:     "Gerencia app",
+					Subcommands: []cli.Command{
+						{
+							Name:      "add-host",
+							ArgsUsage: "[host]",
+							Usage:     "Adiciona host ao app",
+							Action:    addHostToApp,
+						},
+						{
+							Name:      "rm-host",
+							ArgsUsage: "[host]",
+							Usage:     "Remove host do app",
+							Action:    removeHostFromApp,
+						},
+					},
 				},
 			},
 		},

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,7 +28,7 @@ type Host struct {
 
 const (
 	cfgFolderName = ".brawl"
-	cfgFileName   = "config.json"
+	cfgFileName   = "config.yaml"
 )
 
 var (
@@ -156,24 +156,27 @@ func (c *Configuration) readConfigFileFromDisk(fileName string, t interface{}) {
 			log.Fatalln("Ocorreu um erro ao ler o arquivo de configuração.")
 		}
 		file, _ = os.Create(path)
-		configJson, _ := json.MarshalIndent(t, "", " ")
-		_, err = file.Write(configJson)
+		configYaml, _ := yaml.Marshal(t)
+		_, err = file.Write(configYaml)
 		file, _ = os.Open(path)
 	}
-	cfgDeco := json.NewDecoder(file)
-	ec := cfgDeco.Decode(t)
-	if ec != nil {
-		log.Fatalln("Formato invalido do arquivo de configuração", ec)
+	byte, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatalln("Ocorreu um erro ao ler o arquivo de configuração.")
+	}
+	err = yaml.Unmarshal(byte, t)
+	if err != nil {
+		log.Fatalln("Formato invalido do arquivo de configuração", err)
 	}
 }
 
 func (c *Configuration) saveConfigToDisk() {
 	cfgFilePath := filepath.Join(cfgFolder, cfgFileName)
-	c.saveJsonToDisk(c, cfgFilePath)
+	c.saveYamlToDisk(c, cfgFilePath)
 }
 
-func (c *Configuration) saveJsonToDisk(i interface{}, path string) {
-	h, err := json.MarshalIndent(i, "", " ")
+func (c *Configuration) saveYamlToDisk(i interface{}, path string) {
+	h, err := yaml.Marshal(i)
 	if err != nil {
 		log.Fatalln("Não foi possivel fazer o parse das configurações", err)
 	}
