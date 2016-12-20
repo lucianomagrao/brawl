@@ -103,6 +103,7 @@ func getCommands() []cli.Command {
 		{
 			Name:   "versions",
 			Usage:  "Exibe as versões das aplicações",
+			Before: defineDockerHostCommand,
 			Action: showVersionsAction,
 		},
 		{

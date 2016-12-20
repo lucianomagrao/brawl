@@ -19,9 +19,9 @@ const (
 )
 
 var (
-	dockerArgs, dockerComposeArgs []string
-	dockerRegistry                string = os.Getenv(dockerRegistryLocalEnv)
-	dockerRegistryMirror          string = os.Getenv(dockerRegistryMirrorEnv)
+	dockerArgs, dockerComposeArgs, hosts []string
+	dockerRegistry                       string = os.Getenv(dockerRegistryLocalEnv)
+	dockerRegistryMirror                 string = os.Getenv(dockerRegistryMirrorEnv)
 )
 
 func createComposeProjectContext() project.Context {

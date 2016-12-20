@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
+	"github.com/satori/go.uuid"
+
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Configuration struct {
@@ -22,6 +25,7 @@ type App struct {
 }
 
 type Host struct {
+	Uid  string
 	Ip   string
 	Port string
 }
@@ -52,31 +56,36 @@ func (c *Configuration) addApp(a App) error {
 	return nil
 }
 
-func (c *Configuration) removeApp(a App) error {
+func (c *Configuration) removeApp(a string) error {
 	for i := len(c.Apps) - 1; i >= 0; i-- {
 		ap := c.Apps[i]
-		if ap.Name == a.Name {
+		if ap.Name == a {
 			c.Apps = append(c.Apps[:i], c.Apps[i+1:]...)
 			return nil
 		}
 	}
-	return fmt.Errorf("App %s não foi encontrado", a.Name)
+	return fmt.Errorf("App %s não foi encontrado", a)
 }
 
 func (c *Configuration) addHost(h Host) error {
 	for _, ho := range c.Hosts {
-		if ho.Ip == h.Ip {
+		if ho.Ip == h.Ip && h.Port == ho.Port {
 			return fmt.Errorf("Host %s já existe", h.Ip)
 		}
 	}
+	h.Uid = uuid.NewV4().String()
 	c.Hosts = append(c.Hosts, h)
 	return nil
 }
 
 func (c *Configuration) findHostPosition(s string) (err error, i int) {
+	if len(s) < 3 {
+		err = fmt.Errorf("Informe ao menos 3 caracters do UID")
+		return
+	}
 	for i = len(c.Hosts) - 1; i >= 0; i-- {
 		h := c.Hosts[i]
-		if h.Ip == s {
+		if strings.HasPrefix(h.Uid, s) {
 			return
 		}
 	}
@@ -87,7 +96,7 @@ func (c *Configuration) findHostPosition(s string) (err error, i int) {
 func (c *Configuration) findAppPosition(s string) (err error, i int) {
 	for i = len(c.Apps) - 1; i >= 0; i-- {
 		a := c.Apps[i]
-		if a.Name == s {
+		if strings.HasPrefix(a.Name, s) {
 			return
 		}
 	}
@@ -95,15 +104,18 @@ func (c *Configuration) findAppPosition(s string) (err error, i int) {
 	return
 }
 
-func (c *Configuration) removeHost(h Host) error {
+func (c *Configuration) removeHost(h string) error {
+	if len(h) < 3 {
+		return fmt.Errorf("Informe pelo menos 3 caracteres do UID")
+	}
 	for i := len(c.Hosts) - 1; i >= 0; i-- {
 		host := c.Hosts[i]
-		if host.Ip == h.Ip {
+		if host.Uid == h {
 			c.Hosts = append(c.Hosts[:i], c.Hosts[i+1:]...)
 			return nil
 		}
 	}
-	return fmt.Errorf("Host %s não encontrado", h.Ip)
+	return fmt.Errorf("Host %s não encontrado", h)
 }
 
 func (c *Configuration) addHostToApp(a string, h string) error {
@@ -116,11 +128,11 @@ func (c *Configuration) addHostToApp(a string, h string) error {
 		return fmt.Errorf("Host %s não encontrado", h)
 	}
 	for _, ho := range c.Apps[app].Hosts {
-		if ho == c.Hosts[host].Ip {
+		if ho == c.Hosts[host].Uid {
 			return fmt.Errorf("Host %s já esta associado ao app %s", c.Hosts[host].Ip, c.Apps[app].Name)
 		}
 	}
-	c.Apps[app].Hosts = append(c.Apps[app].Hosts, c.Hosts[host].Ip)
+	c.Apps[app].Hosts = append(c.Apps[app].Hosts, c.Hosts[host].Uid)
 	return nil
 }
 
@@ -135,7 +147,7 @@ func (c *Configuration) removeHostFromApp(a string, h string) error {
 	}
 	for i := len(c.Apps[app].Hosts) - 1; i >= 0; i-- {
 		ho := c.Apps[app].Hosts[i]
-		if ho == c.Hosts[host].Ip {
+		if ho == c.Hosts[host].Uid {
 			c.Apps[app].Hosts = append(c.Apps[app].Hosts[:i], c.Apps[app].Hosts[i+1:]...)
 			return nil
 		}
