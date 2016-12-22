@@ -7,6 +7,20 @@ import (
 func getCommands() []cli.Command {
 	return []cli.Command{
 		{
+			Name:      "reload",
+			Usage:     "Recria containers com novas configurações",
+			ArgsUsage: "[aplicações...]",
+			Before:    defineDockerHostCommand,
+			Action:    reloadAction,
+		},
+		{
+			Name:      "stop",
+			Usage:     "Para os containers",
+			ArgsUsage: "[aplicações...]",
+			Before:    defineDockerHostCommand,
+			Action:    stopAction,
+		},
+		{
 			Name:      "deploy",
 			Usage:     "Inicia o deploy da aplicação",
 			ArgsUsage: "[aplicações...]",

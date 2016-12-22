@@ -64,6 +64,7 @@ func updateServicesImage(dockerCompose *project.Project) {
 		dockerRegistry = dockerRegistryMirror
 		os.Setenv(dockerRegistryLocalEnv, dockerRegistryMirror)
 	}
+	fmt.Printf("Fazendo cache das imagens docker no registry local --> \n")
 	for _, name := range dockerCompose.ServiceConfigs.Keys() {
 		createCacheServiceImage(name, dockerCompose)
 	}

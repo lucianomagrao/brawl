@@ -81,6 +81,28 @@ func deployAction(c *cli.Context) error {
 	for _, h := range hosts {
 		args := []string{"-H", h, "up", "-d"}
 		args = append(args, c.Args()...)
+		fmt.Printf("Iniciando deploy no host --> %s \n", h)
+		execComposeCommandAndWait(args...)
+	}
+	return nil
+}
+
+func stopAction(c *cli.Context) error {
+	for _, h := range hosts {
+		args := []string{"-H", h, "down"}
+		args = append(args, c.Args()...)
+		fmt.Printf("Parando containers do host --> %s \n", h)
+		execComposeCommandAndWait(args...)
+	}
+	return nil
+}
+
+func reloadAction(c *cli.Context) error {
+	stopAction(c)
+	for _, h := range hosts {
+		args := []string{"-H", h, "up", "-d"}
+		args = append(args, c.Args()...)
+		fmt.Printf("Inciando containers do host --> %s \n", h)
 		execComposeCommandAndWait(args...)
 	}
 	return nil
