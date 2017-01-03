@@ -28,7 +28,7 @@ func executeDockerCmd(c *cli.Context) error {
 		printInfoMessage("Executando comando no host --> %s \n", host)
 		code := execDockerCommandAndWait(args...)
 		if code > 0 {
-			return throwErrorMessage("Ocorreu um erro na execução, código de saida: %i", code)
+			return createErrorMessage("Ocorreu um erro na execução, código de saida: %i", code)
 		}
 	}
 	return nil
@@ -41,7 +41,7 @@ func executeDockerComposeCmd(c *cli.Context) error {
 		printInfoMessage("Executando comando no host --> %s \n", host)
 		code := execDockerCommandAndWait(args...)
 		if code > 0 {
-			return throwErrorMessage("Ocorreu um erro na execução, código de saida: %i", code)
+			return createErrorMessage("Ocorreu um erro na execução, código de saida: %i", code)
 		}
 	}
 	return nil
@@ -127,7 +127,7 @@ func showVersionsAction(c *cli.Context) error {
 	for _, name := range dockerCompose.ServiceConfigs.Keys() {
 		service, ok := dockerCompose.ServiceConfigs.Get(name)
 		if !ok {
-			return throwErrorMessage("Falha ao obter a key %s do config", name)
+			return createErrorMessage("Falha ao obter a key %s do config", name)
 		}
 		if len(service.Image) == 0 {
 			continue
@@ -179,7 +179,7 @@ func list(tmpl string, qtmpl string) error {
 	t := template.Must(template.New("ls").Funcs(funcMap).Parse(tp))
 	err := t.Execute(w, cfg)
 	if err != nil {
-		return throwErrorMessage("Ocorreu um erro: %s", err)
+		return createErrorMessage("Ocorreu um erro: %s", err)
 	}
 	w.Flush()
 	return nil

@@ -49,7 +49,7 @@ func LoadConfig() *Configuration {
 func (c *Configuration) addApp(a App) error {
 	for _, ap := range c.Apps {
 		if ap.Name == a.Name {
-			return throwErrorMessage("App %s já existe", a.Name)
+			return createErrorMessage("App %s já existe", a.Name)
 		}
 	}
 	c.Apps = append(c.Apps, a)
@@ -64,13 +64,13 @@ func (c *Configuration) removeApp(a string) error {
 			return nil
 		}
 	}
-	return throwErrorMessage("App %s não foi encontrado", a)
+	return createErrorMessage("App %s não foi encontrado", a)
 }
 
 func (c *Configuration) addHost(h Host) (error, Host) {
 	for _, ho := range c.Hosts {
 		if ho.Ip == h.Ip && h.Port == ho.Port {
-			return throwErrorMessage("Host %s já existe", h.Ip), h
+			return createErrorMessage("Host %s já existe", h.Ip), h
 		}
 	}
 	h.Uid = uuid.NewV4().String()
@@ -80,7 +80,7 @@ func (c *Configuration) addHost(h Host) (error, Host) {
 
 func (c *Configuration) findHostPosition(s string) (err error, i int) {
 	if len(s) < 3 {
-		err = throwErrorMessage("Informe ao menos 3 caracters do UID")
+		err = createErrorMessage("Informe ao menos 3 caracters do UID")
 		return
 	}
 	for i = len(c.Hosts) - 1; i >= 0; i-- {
@@ -89,7 +89,7 @@ func (c *Configuration) findHostPosition(s string) (err error, i int) {
 			return
 		}
 	}
-	err = throwErrorMessage("Host %s não encontrado", s)
+	err = createErrorMessage("Host %s não encontrado", s)
 	return
 }
 
@@ -100,13 +100,13 @@ func (c *Configuration) findAppPosition(s string) (err error, i int) {
 			return
 		}
 	}
-	err = throwErrorMessage("App %s não encontrado", s)
+	err = createErrorMessage("App %s não encontrado", s)
 	return
 }
 
 func (c *Configuration) removeHost(h string) error {
 	if len(h) < 3 {
-		return throwErrorMessage("Informe pelo menos 3 caracteres do UID")
+		return createErrorMessage("Informe pelo menos 3 caracteres do UID")
 	}
 	for i := len(c.Hosts) - 1; i >= 0; i-- {
 		host := c.Hosts[i]
@@ -115,21 +115,21 @@ func (c *Configuration) removeHost(h string) error {
 			return nil
 		}
 	}
-	return throwErrorMessage("Host %s não encontrado", h)
+	return createErrorMessage("Host %s não encontrado", h)
 }
 
 func (c *Configuration) addHostToApp(a string, h string) error {
 	err, app := c.findAppPosition(a)
 	if err != nil {
-		return throwErrorMessage("App %s não encontrado", a)
+		return createErrorMessage("App %s não encontrado", a)
 	}
 	err, host := c.findHostPosition(h)
 	if err != nil {
-		return throwErrorMessage("Host %s não encontrado", h)
+		return createErrorMessage("Host %s não encontrado", h)
 	}
 	for _, ho := range c.Apps[app].Hosts {
 		if ho == c.Hosts[host].Uid {
-			return throwErrorMessage("Host %s já esta associado ao app %s", c.Hosts[host].Ip, c.Apps[app].Name)
+			return createErrorMessage("Host %s já esta associado ao app %s", c.Hosts[host].Ip, c.Apps[app].Name)
 		}
 	}
 	c.Apps[app].Hosts = append(c.Apps[app].Hosts, c.Hosts[host].Uid)
@@ -139,11 +139,11 @@ func (c *Configuration) addHostToApp(a string, h string) error {
 func (c *Configuration) removeHostFromApp(a string, h string) error {
 	err, app := c.findAppPosition(a)
 	if err != nil {
-		return throwErrorMessage("App %s não encontrado", a)
+		return createErrorMessage("App %s não encontrado", a)
 	}
 	err, host := c.findHostPosition(h)
 	if err != nil {
-		return throwErrorMessage("Host %s não encontrado", h)
+		return createErrorMessage("Host %s não encontrado", h)
 	}
 	for i := len(c.Apps[app].Hosts) - 1; i >= 0; i-- {
 		ho := c.Apps[app].Hosts[i]
@@ -152,7 +152,7 @@ func (c *Configuration) removeHostFromApp(a string, h string) error {
 			return nil
 		}
 	}
-	return throwErrorMessage("Host %s não foi encontrado no app %s", c.Hosts[host].Ip, c.Apps[app].Name)
+	return createErrorMessage("Host %s não foi encontrado no app %s", c.Hosts[host].Ip, c.Apps[app].Name)
 }
 
 func (c *Configuration) readConfigurationFromDisk() {

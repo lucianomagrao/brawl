@@ -160,7 +160,7 @@ func printInfoMessage(m string, a ...interface{}) (int, error) {
 	return fmt.Printf(blue("Info: ")+m, a...)
 }
 
-func throwErrorMessage(m string, a ...interface{}) error {
+func createErrorMessage(m string, a ...interface{}) error {
 	red := color.New(color.FgRed, color.Bold).SprintFunc()
 	return fmt.Errorf(red("Error: ") + fmt.Sprintf(m, a...))
 }
