@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/satori/go.uuid"
 
+	"github.com/fatih/color"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -49,7 +49,7 @@ func LoadConfig() *Configuration {
 func (c *Configuration) addApp(a App) error {
 	for _, ap := range c.Apps {
 		if ap.Name == a.Name {
-			return fmt.Errorf("App %s já existe", a.Name)
+			return throwErrorMessage("App %s já existe", a.Name)
 		}
 	}
 	c.Apps = append(c.Apps, a)
@@ -64,23 +64,23 @@ func (c *Configuration) removeApp(a string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("App %s não foi encontrado", a)
+	return throwErrorMessage("App %s não foi encontrado", a)
 }
 
-func (c *Configuration) addHost(h Host) error {
+func (c *Configuration) addHost(h Host) (error, Host) {
 	for _, ho := range c.Hosts {
 		if ho.Ip == h.Ip && h.Port == ho.Port {
-			return fmt.Errorf("Host %s já existe", h.Ip)
+			return throwErrorMessage("Host %s já existe", h.Ip), h
 		}
 	}
 	h.Uid = uuid.NewV4().String()
 	c.Hosts = append(c.Hosts, h)
-	return nil
+	return nil, h
 }
 
 func (c *Configuration) findHostPosition(s string) (err error, i int) {
 	if len(s) < 3 {
-		err = fmt.Errorf("Informe ao menos 3 caracters do UID")
+		err = throwErrorMessage("Informe ao menos 3 caracters do UID")
 		return
 	}
 	for i = len(c.Hosts) - 1; i >= 0; i-- {
@@ -89,7 +89,7 @@ func (c *Configuration) findHostPosition(s string) (err error, i int) {
 			return
 		}
 	}
-	err = fmt.Errorf("Host %s não encontrado", s)
+	err = throwErrorMessage("Host %s não encontrado", s)
 	return
 }
 
@@ -100,36 +100,36 @@ func (c *Configuration) findAppPosition(s string) (err error, i int) {
 			return
 		}
 	}
-	err = fmt.Errorf("App %s não encontrado", s)
+	err = throwErrorMessage("App %s não encontrado", s)
 	return
 }
 
 func (c *Configuration) removeHost(h string) error {
 	if len(h) < 3 {
-		return fmt.Errorf("Informe pelo menos 3 caracteres do UID")
+		return throwErrorMessage("Informe pelo menos 3 caracteres do UID")
 	}
 	for i := len(c.Hosts) - 1; i >= 0; i-- {
 		host := c.Hosts[i]
-		if host.Uid == h {
+		if strings.HasPrefix(host.Uid, h) {
 			c.Hosts = append(c.Hosts[:i], c.Hosts[i+1:]...)
 			return nil
 		}
 	}
-	return fmt.Errorf("Host %s não encontrado", h)
+	return throwErrorMessage("Host %s não encontrado", h)
 }
 
 func (c *Configuration) addHostToApp(a string, h string) error {
 	err, app := c.findAppPosition(a)
 	if err != nil {
-		return fmt.Errorf("App %s não encontrado", a)
+		return throwErrorMessage("App %s não encontrado", a)
 	}
 	err, host := c.findHostPosition(h)
 	if err != nil {
-		return fmt.Errorf("Host %s não encontrado", h)
+		return throwErrorMessage("Host %s não encontrado", h)
 	}
 	for _, ho := range c.Apps[app].Hosts {
 		if ho == c.Hosts[host].Uid {
-			return fmt.Errorf("Host %s já esta associado ao app %s", c.Hosts[host].Ip, c.Apps[app].Name)
+			return throwErrorMessage("Host %s já esta associado ao app %s", c.Hosts[host].Ip, c.Apps[app].Name)
 		}
 	}
 	c.Apps[app].Hosts = append(c.Apps[app].Hosts, c.Hosts[host].Uid)
@@ -139,11 +139,11 @@ func (c *Configuration) addHostToApp(a string, h string) error {
 func (c *Configuration) removeHostFromApp(a string, h string) error {
 	err, app := c.findAppPosition(a)
 	if err != nil {
-		return fmt.Errorf("App %s não encontrado", a)
+		return throwErrorMessage("App %s não encontrado", a)
 	}
 	err, host := c.findHostPosition(h)
 	if err != nil {
-		return fmt.Errorf("Host %s não encontrado", h)
+		return throwErrorMessage("Host %s não encontrado", h)
 	}
 	for i := len(c.Apps[app].Hosts) - 1; i >= 0; i-- {
 		ho := c.Apps[app].Hosts[i]
@@ -152,7 +152,7 @@ func (c *Configuration) removeHostFromApp(a string, h string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Host %s não foi encontrado no app %s", c.Hosts[host].Ip, c.Apps[app].Name)
+	return throwErrorMessage("Host %s não foi encontrado no app %s", c.Hosts[host].Ip, c.Apps[app].Name)
 }
 
 func (c *Configuration) readConfigurationFromDisk() {
@@ -165,7 +165,7 @@ func (c *Configuration) readConfigFileFromDisk(fileName string, t interface{}) {
 	file, err := os.Open(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Fatalln("Ocorreu um erro ao ler o arquivo de configuração.")
+			log.Fatalln(color.RedString("Error: ") + "Ocorreu um erro ao ler o arquivo de configuração.")
 		}
 		file, _ = os.Create(path)
 		configYaml, _ := yaml.Marshal(t)
@@ -174,11 +174,11 @@ func (c *Configuration) readConfigFileFromDisk(fileName string, t interface{}) {
 	}
 	byte, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalln("Ocorreu um erro ao ler o arquivo de configuração.")
+		log.Fatalln(color.RedString("Error: ") + "Ocorreu um erro ao ler o arquivo de configuração.")
 	}
 	err = yaml.Unmarshal(byte, t)
 	if err != nil {
-		log.Fatalln("Formato invalido do arquivo de configuração", err)
+		log.Fatalln(color.RedString("Error: ")+"Formato invalido do arquivo de configuração", err)
 	}
 }
 
@@ -190,7 +190,7 @@ func (c *Configuration) saveConfigToDisk() {
 func (c *Configuration) saveYamlToDisk(i interface{}, path string) {
 	h, err := yaml.Marshal(i)
 	if err != nil {
-		log.Fatalln("Não foi possivel fazer o parse das configurações", err)
+		log.Fatalln(color.RedString("Error: ")+"Não foi possivel fazer o parse das configurações", err)
 	}
 	ioutil.WriteFile(path, h, 0644)
 }

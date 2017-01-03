@@ -9,21 +9,21 @@ func getCommands() []cli.Command {
 		{
 			Name:      "reload",
 			Usage:     "Recria containers com novas configurações",
-			ArgsUsage: "[aplicações...]",
+			ArgsUsage: "[app]",
 			Before:    defineDockerHostCommand,
 			Action:    reloadAction,
 		},
 		{
 			Name:      "stop",
 			Usage:     "Para os containers",
-			ArgsUsage: "[aplicações...]",
+			ArgsUsage: "[app]",
 			Before:    defineDockerHostCommand,
 			Action:    stopAction,
 		},
 		{
 			Name:      "deploy",
 			Usage:     "Inicia o deploy da aplicação",
-			ArgsUsage: "[aplicações...]",
+			ArgsUsage: "[app]",
 			Before:    defineDockerHostCommand,
 			Action:    deployAction,
 		},
@@ -94,19 +94,18 @@ func getCommands() []cli.Command {
 					Action:    createApp,
 				},
 				{
-					Name:      "manage",
-					ArgsUsage: "[app]",
-					Usage:     "Gerencia app",
+					Name:  "manage",
+					Usage: "Gerencia app",
 					Subcommands: []cli.Command{
 						{
 							Name:      "add-host",
-							ArgsUsage: "[host]",
+							ArgsUsage: "[app] [host]",
 							Usage:     "Adiciona host ao app",
 							Action:    addHostToApp,
 						},
 						{
 							Name:      "rm-host",
-							ArgsUsage: "[host]",
+							ArgsUsage: "[app] [host]",
 							Usage:     "Remove host do app",
 							Action:    removeHostFromApp,
 						},

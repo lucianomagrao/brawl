@@ -14,53 +14,66 @@ import (
 var ValidIpAddressRegex = `[0-9]+(?:\.[0-9]+){3}:[0-9]+`
 
 func forceUpdateImages(c *cli.Context) error {
+	dockerArgs = append(dockerArgs, "-H", hosts[0])
+	dockerComposeArgs = append(dockerComposeArgs, "-H", hosts[0])
 	dockerCompose := parseDockerCompose()
 	updateServicesImage(dockerCompose)
 	return nil
 }
 
 func executeDockerCmd(c *cli.Context) error {
-	code := execDockerCommandAndWait(c.Args()...)
-	if code > 0 {
-		return fmt.Errorf("Ocorreu um erro na execução, código de saida: %i", code)
+	for _, host := range hosts {
+		args := append(dockerArgs, "-H", host)
+		args = append(args, c.Args()...)
+		printInfoMessage("Executando comando no host --> %s \n", host)
+		code := execDockerCommandAndWait(args...)
+		if code > 0 {
+			return throwErrorMessage("Ocorreu um erro na execução, código de saida: %i", code)
+		}
 	}
 	return nil
 }
 
 func executeDockerComposeCmd(c *cli.Context) error {
-	code := execComposeCommandAndWait(c.Args()...)
-	if code > 0 {
-		return fmt.Errorf("Ocorreu um erro na execução, código de saida: %i", code)
+	for _, host := range hosts {
+		args := append(dockerComposeArgs, "-H", host)
+		args = append(args, c.Args()...)
+		printInfoMessage("Executando comando no host --> %s \n", host)
+		code := execDockerCommandAndWait(args...)
+		if code > 0 {
+			return throwErrorMessage("Ocorreu um erro na execução, código de saida: %i", code)
+		}
 	}
 	return nil
 }
 
 func defineDockerHostCommand(c *cli.Context) error {
 	cfg := LoadConfig()
+	var ho Host
 	if len(app) > 0 {
 		_, a := cfg.findAppPosition(app)
 		for _, host := range cfg.Apps[a].Hosts {
 			_, h := cfg.findHostPosition(host)
-			ho := cfg.Hosts[h]
+			ho = cfg.Hosts[h]
 			hosts = append(hosts, ho.Ip+":"+ho.Port)
 		}
 		workingDir = cfg.Apps[a].Dir
 	}
 	if len(host) > 0 {
 		rp := regexp.MustCompile(ValidIpAddressRegex)
-		tcp := "tcp://"
+		var addr string
 		if rp.MatchString(host) {
-			tcp += host
+			addr = host
 		} else {
 			err, h := cfg.findHostPosition(host)
 			if err != nil {
 				return err
 			}
-			ho := cfg.Hosts[h]
-			tcp += ho.Ip + ":" + ho.Port
+			addr = cfg.Hosts[h].Ip + ":" + cfg.Hosts[h].Port
 		}
-		dockerArgs = append(dockerArgs, "-H", tcp)
-		dockerComposeArgs = append(dockerComposeArgs, "-H", tcp)
+		if len(app) > 0 {
+			hosts = []string{addr}
+		}
 	}
 	if insecure {
 		os.Unsetenv("DOCKER_CERT_PATH")
@@ -81,7 +94,7 @@ func deployAction(c *cli.Context) error {
 	for _, h := range hosts {
 		args := []string{"-H", h, "up", "-d"}
 		args = append(args, c.Args()...)
-		fmt.Printf("Iniciando deploy no host --> %s \n", h)
+		printInfoMessage("Iniciando deploy no host --> %s \n", h)
 		execComposeCommandAndWait(args...)
 	}
 	return nil
@@ -91,7 +104,7 @@ func stopAction(c *cli.Context) error {
 	for _, h := range hosts {
 		args := []string{"-H", h, "down"}
 		args = append(args, c.Args()...)
-		fmt.Printf("Parando containers do host --> %s \n", h)
+		printInfoMessage("Parando containers do host --> %s \n", h)
 		execComposeCommandAndWait(args...)
 	}
 	return nil
@@ -102,7 +115,7 @@ func reloadAction(c *cli.Context) error {
 	for _, h := range hosts {
 		args := []string{"-H", h, "up", "-d"}
 		args = append(args, c.Args()...)
-		fmt.Printf("Inciando containers do host --> %s \n", h)
+		printInfoMessage("Inciando containers do host --> %s \n", h)
 		execComposeCommandAndWait(args...)
 	}
 	return nil
@@ -110,16 +123,16 @@ func reloadAction(c *cli.Context) error {
 
 func showVersionsAction(c *cli.Context) error {
 	dockerCompose := parseDockerCompose()
-	fmt.Printf("\nVersões das aplicações\n\n")
+	printInfoMessage("\nVersões das aplicações\n\n")
 	for _, name := range dockerCompose.ServiceConfigs.Keys() {
 		service, ok := dockerCompose.ServiceConfigs.Get(name)
 		if !ok {
-			return fmt.Errorf("Falha ao obter a key %s do config", name)
+			return throwErrorMessage("Falha ao obter a key %s do config", name)
 		}
 		if len(service.Image) == 0 {
 			continue
 		}
-		fmt.Printf("%s=%s\n", name, getServiceVersionFromProperties(name))
+		printInfoMessage("%s=%s\n", name, getServiceVersionFromProperties(name))
 	}
 	return nil
 }
@@ -166,7 +179,7 @@ func list(tmpl string, qtmpl string) error {
 	t := template.Must(template.New("ls").Funcs(funcMap).Parse(tp))
 	err := t.Execute(w, cfg)
 	if err != nil {
-		return fmt.Errorf("Ocorreu um erro: %s", err)
+		return throwErrorMessage("Ocorreu um erro: %s", err)
 	}
 	w.Flush()
 	return nil
@@ -175,7 +188,7 @@ func list(tmpl string, qtmpl string) error {
 func removeApp(c *cli.Context) error {
 	args := c.Args()
 	if len(args.First()) == 0 {
-		return fmt.Errorf("\"brawl app rm\" requer um parametro")
+		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
 	for _, a := range args {
@@ -192,7 +205,7 @@ func removeApp(c *cli.Context) error {
 func removeHost(c *cli.Context) error {
 	args := c.Args()
 	if len(args.First()) == 0 {
-		return fmt.Errorf("\"brawl host rm\" requer um parametro")
+		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
 	for _, a := range args {
@@ -213,15 +226,15 @@ func createHost(c *cli.Context) error {
 		Port: args.Get(1),
 	}
 	if len(host.Ip) == 0 || len(host.Port) == 0 {
-		return fmt.Errorf("\"brawl host create\" requer ip e porta como parametros")
+		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
-	err := cfg.addHost(host)
+	err, h := cfg.addHost(host)
 	if err != nil {
 		return err
 	}
 	cfg.saveConfigToDisk()
-	fmt.Println(host.Uid)
+	fmt.Println(h.Uid)
 	return nil
 }
 
@@ -232,7 +245,7 @@ func createApp(c *cli.Context) error {
 		Dir:  args.Get(1),
 	}
 	if len(app.Name) == 0 || len(app.Dir) == 0 {
-		return fmt.Errorf("\"brawl app create\" requer nome e diretório como parametros")
+		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
 	err := cfg.addApp(app)
@@ -249,7 +262,7 @@ func addHostToApp(c *cli.Context) error {
 	a := args.Get(0)
 	h := args.Get(1)
 	if len(a) == 0 || len(h) == 0 {
-		return fmt.Errorf("\"brawl app manage add-host\" requer 2 parametros.")
+		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
 	err := cfg.addHostToApp(a, h)
@@ -266,7 +279,7 @@ func removeHostFromApp(c *cli.Context) error {
 	a := args.Get(0)
 	h := args.Get(1)
 	if len(a) == 0 || len(h) == 0 {
-		return fmt.Errorf("\"brawl app manage rem-host\" requer 2 parametros.")
+		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
 	err := cfg.removeHostFromApp(a, h)

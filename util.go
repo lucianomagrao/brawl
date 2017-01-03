@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project"
+	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 )
 
@@ -37,10 +38,10 @@ func parseDockerCompose() *project.Project {
 	ctx := createComposeProjectContext()
 	p := project.NewProject(&ctx, nil, &config.ParseOptions{})
 	if err := p.Parse(); err != nil {
-		log.Fatalf("Falha ao executar o parse do arquivo %s: %v", composeFile, err)
+		log.Fatalf(color.RedString("Error: ")+"Falha ao executar o parse do arquivo %s: %v", composeFile, err)
 	}
 	if p.ServiceConfigs == nil {
-		log.Fatalf("Nenhum serviço encontrado, abortando")
+		log.Fatalf(color.RedString("Error: ") + "Nenhum serviço encontrado, abortando")
 	}
 	return p
 }
@@ -49,22 +50,22 @@ func getServiceVersionFromProperties(serviceName string) string {
 	var envMap map[string]string
 	envMap, err := godotenv.Read(getWorkingDir() + "/.env")
 	if err != nil {
-		log.Fatalf("Falha ao extrair variaveis do envfile: %v", err)
+		log.Fatalf(color.RedString("Error: ")+"Falha ao extrair variaveis do envfile: %v", err)
 	}
 	version := envMap[strings.ToUpper(serviceName)+"_VERSION"]
 	if len(version) == 0 {
-		log.Fatalln("Variavel VERSION não informada no .env")
+		log.Fatalln(color.RedString("Error: ") + "Variavel VERSION não informada no .env")
 	}
 	return version
 }
 
 func updateServicesImage(dockerCompose *project.Project) {
 	if len(dockerRegistry) == 0 {
-		fmt.Printf("Variavel %s não foi setada, as imagens serão baixadas diretamente de %s podendo causar lentidão.\n", dockerRegistryLocalEnv, dockerRegistryMirror)
+		printInfoMessage("Variavel %s não foi setada, as imagens serão baixadas diretamente de %s podendo causar lentidão.\n", dockerRegistryLocalEnv, dockerRegistryMirror)
 		dockerRegistry = dockerRegistryMirror
 		os.Setenv(dockerRegistryLocalEnv, dockerRegistryMirror)
 	}
-	fmt.Printf("Fazendo cache das imagens docker no registry local --> \n")
+	printInfoMessage("Fazendo cache das imagens docker no registry local --> \n")
 	for _, name := range dockerCompose.ServiceConfigs.Keys() {
 		createCacheServiceImage(name, dockerCompose)
 	}
@@ -73,10 +74,10 @@ func updateServicesImage(dockerCompose *project.Project) {
 func createCacheServiceImage(name string, dockerCompose *project.Project) {
 	service, ok := dockerCompose.ServiceConfigs.Get(name)
 	if !ok {
-		log.Fatalf("Falha ao obter a key %s do config", name)
+		log.Fatalf(color.RedString("Error: ")+"Falha ao obter a key %s do config", name)
 	}
 	if len(service.Image) == 0 {
-		log.Printf("Serviço %s não utiliza imagem. Continuando...", name)
+		printInfoMessage("Serviço %s não utiliza imagem. Continuando...", name)
 		return
 	}
 	repl := strings.NewReplacer(
@@ -99,28 +100,28 @@ func createCacheServiceImage(name string, dockerCompose *project.Project) {
 func pushImage(img string) {
 	ec := execDockerCommandAndWait("push", img)
 	if ec > 0 {
-		log.Fatalf("Não foi possivel fazer o push da imagem %s", img)
+		log.Fatalf(color.RedString("Error: ")+"Não foi possivel fazer o push da imagem %s", img)
 	}
 }
 
 func pullImage(img string) {
 	ec := execDockerCommandAndWait("pull", img)
 	if ec > 0 {
-		log.Fatalf("Não foi possivel fazer o pull da imagem %s", img)
+		log.Fatalf(color.RedString("Error: ")+"Não foi possivel fazer o pull da imagem %s", img)
 	}
 }
 
 func tagImage(img, tag string) {
 	ec := execDockerCommandAndWait("tag", img, tag)
 	if ec > 0 {
-		log.Fatalf("Não foi possivel criar a tag para a imagem %s", img)
+		log.Fatalf(color.RedString("Error: ")+"Não foi possivel criar a tag para a imagem %s", img)
 	}
 }
 
 func removeImage(img string) {
 	ec := execDockerCommandAndWait("rmi", img)
 	if ec > 0 {
-		log.Fatalf("Não foi possivel remover a imagem %s", img)
+		log.Fatalf(color.RedString("Error: ")+"Não foi possivel remover a imagem %s", img)
 	}
 }
 
@@ -152,4 +153,14 @@ func execCommandAndWait(location string, command ...string) int {
 		}
 	}
 	return 0
+}
+
+func printInfoMessage(m string, a ...interface{}) (int, error) {
+	blue := color.New(color.FgCyan, color.Bold).SprintFunc()
+	return fmt.Printf(blue("Info: ")+m, a...)
+}
+
+func throwErrorMessage(m string, a ...interface{}) error {
+	red := color.New(color.FgRed, color.Bold).SprintFunc()
+	return fmt.Errorf(red("Error: ") + fmt.Sprintf(m, a...))
 }
