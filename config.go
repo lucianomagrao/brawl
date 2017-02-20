@@ -4,29 +4,33 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/satori/go.uuid"
 
-	"github.com/fatih/color"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fatih/color"
+	"gopkg.in/yaml.v2"
 )
 
+//Configuration config file struct
 type Configuration struct {
 	Apps  []App
 	Hosts []Host
 }
 
+//App App struct
 type App struct {
 	Name  string
 	Dir   string
 	Hosts []string
 }
 
+//Host Host struct
 type Host struct {
-	Uid  string
-	Ip   string
+	UID  string
+	IP   string
 	Port string
 }
 
@@ -40,6 +44,7 @@ var (
 	cfgFolder string = filepath.Join(home, cfgFolderName)
 )
 
+//LoadConfig Loads configuration from config file on disk
 func LoadConfig() *Configuration {
 	cfg := &Configuration{}
 	cfg.readConfigurationFromDisk()
@@ -67,25 +72,25 @@ func (c *Configuration) removeApp(a string) error {
 	return createErrorMessage("App %s não foi encontrado", a)
 }
 
-func (c *Configuration) addHost(h Host) (error, Host) {
+func (c *Configuration) addHost(h Host) (Host, error) {
 	for _, ho := range c.Hosts {
-		if ho.Ip == h.Ip && h.Port == ho.Port {
-			return createErrorMessage("Host %s já existe", h.Ip), h
+		if ho.IP == h.IP && h.Port == ho.Port {
+			return h, createErrorMessage("Host %s já existe", h.IP)
 		}
 	}
-	h.Uid = uuid.NewV4().String()
+	h.UID = uuid.NewV4().String()
 	c.Hosts = append(c.Hosts, h)
-	return nil, h
+	return h, nil
 }
 
-func (c *Configuration) findHostPosition(s string) (err error, i int) {
+func (c *Configuration) findHostPosition(s string) (i int, err error) {
 	if len(s) < 3 {
 		err = createErrorMessage("Informe ao menos 3 caracters do UID")
 		return
 	}
 	for i = len(c.Hosts) - 1; i >= 0; i-- {
 		h := c.Hosts[i]
-		if strings.HasPrefix(h.Uid, s) {
+		if strings.HasPrefix(h.UID, s) {
 			return
 		}
 	}
@@ -93,7 +98,7 @@ func (c *Configuration) findHostPosition(s string) (err error, i int) {
 	return
 }
 
-func (c *Configuration) findAppPosition(s string) (err error, i int) {
+func (c *Configuration) findAppPosition(s string) (i int, err error) {
 	for i = len(c.Apps) - 1; i >= 0; i-- {
 		a := c.Apps[i]
 		if strings.HasPrefix(a.Name, s) {
@@ -110,7 +115,7 @@ func (c *Configuration) removeHost(h string) error {
 	}
 	for i := len(c.Hosts) - 1; i >= 0; i-- {
 		host := c.Hosts[i]
-		if strings.HasPrefix(host.Uid, h) {
+		if strings.HasPrefix(host.UID, h) {
 			c.Hosts = append(c.Hosts[:i], c.Hosts[i+1:]...)
 			return nil
 		}
@@ -119,40 +124,40 @@ func (c *Configuration) removeHost(h string) error {
 }
 
 func (c *Configuration) addHostToApp(a string, h string) error {
-	err, app := c.findAppPosition(a)
+	app, err := c.findAppPosition(a)
 	if err != nil {
 		return createErrorMessage("App %s não encontrado", a)
 	}
-	err, host := c.findHostPosition(h)
+	host, err := c.findHostPosition(h)
 	if err != nil {
 		return createErrorMessage("Host %s não encontrado", h)
 	}
 	for _, ho := range c.Apps[app].Hosts {
-		if ho == c.Hosts[host].Uid {
-			return createErrorMessage("Host %s já esta associado ao app %s", c.Hosts[host].Ip, c.Apps[app].Name)
+		if ho == c.Hosts[host].UID {
+			return createErrorMessage("Host %s já esta associado ao app %s", c.Hosts[host].IP, c.Apps[app].Name)
 		}
 	}
-	c.Apps[app].Hosts = append(c.Apps[app].Hosts, c.Hosts[host].Uid)
+	c.Apps[app].Hosts = append(c.Apps[app].Hosts, c.Hosts[host].UID)
 	return nil
 }
 
 func (c *Configuration) removeHostFromApp(a string, h string) error {
-	err, app := c.findAppPosition(a)
+	app, err := c.findAppPosition(a)
 	if err != nil {
 		return createErrorMessage("App %s não encontrado", a)
 	}
-	err, host := c.findHostPosition(h)
+	host, err := c.findHostPosition(h)
 	if err != nil {
 		return createErrorMessage("Host %s não encontrado", h)
 	}
 	for i := len(c.Apps[app].Hosts) - 1; i >= 0; i-- {
 		ho := c.Apps[app].Hosts[i]
-		if ho == c.Hosts[host].Uid {
+		if ho == c.Hosts[host].UID {
 			c.Apps[app].Hosts = append(c.Apps[app].Hosts[:i], c.Apps[app].Hosts[i+1:]...)
 			return nil
 		}
 	}
-	return createErrorMessage("Host %s não foi encontrado no app %s", c.Hosts[host].Ip, c.Apps[app].Name)
+	return createErrorMessage("Host %s não foi encontrado no app %s", c.Hosts[host].IP, c.Apps[app].Name)
 }
 
 func (c *Configuration) readConfigurationFromDisk() {
@@ -170,6 +175,9 @@ func (c *Configuration) readConfigFileFromDisk(fileName string, t interface{}) {
 		file, _ = os.Create(path)
 		configYaml, _ := yaml.Marshal(t)
 		_, err = file.Write(configYaml)
+		if err != nil {
+			log.Fatalln(color.RedString("Error: ") + "Ocorreu um erro ao criar o arquivo de configuração.")
+		}
 		file, _ = os.Open(path)
 	}
 	byte, err := ioutil.ReadFile(path)

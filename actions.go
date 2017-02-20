@@ -6,12 +6,30 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/urfave/cli"
 	"regexp"
 	"strings"
+
+	"github.com/urfave/cli"
 )
 
-var ValidIpAddressRegex = `[0-9]+(?:\.[0-9]+){3}:[0-9]+`
+//ValidIPAddressRegex Regex to validate IP addresses
+var ValidIPAddressRegex = `[0-9]+(?:\.[0-9]+){3}:[0-9]+`
+
+//ListHostTemplate Template for Host listing
+var ListHostTemplate = `UID{{"\t\t\t"}}IP{{"\t\t\t"}}PORT{{range .Hosts}}
+{{.UID}}{{"\t\t\t"}}{{.IP}}{{"\t\t\t"}}{{.Port}}{{end}}
+`
+
+//ListHostTeplateQuiet Template for quiet Host listing
+var ListHostTeplateQuiet = `{{range .Hosts}}{{.UID}}{{"\n"}}{{end}}`
+
+//ListAppTemplate Template for App listing
+var ListAppTemplate = `NAME{{"\t\t\t"}}DIR{{"\t\t\t"}}HOSTS{{range .Apps}}
+{{.Name}}{{"\t\t\t"}}{{.Dir}}{{"\t\t\t"}}{{join .Hosts ", "}}{{end}}
+`
+
+//ListAppTeplateQuiet Template for quiet App listing
+var ListAppTeplateQuiet = `{{range .Apps}}{{.Name}}{{"\n"}}{{end}}`
 
 func forceUpdateImages(c *cli.Context) error {
 	dockerArgs = append(dockerArgs, "-H", hosts[0])
@@ -51,25 +69,25 @@ func defineDockerHostCommand(c *cli.Context) error {
 	cfg := LoadConfig()
 	var ho Host
 	if len(app) > 0 {
-		_, a := cfg.findAppPosition(app)
+		a, _ := cfg.findAppPosition(app)
 		for _, host := range cfg.Apps[a].Hosts {
-			_, h := cfg.findHostPosition(host)
+			h, _ := cfg.findHostPosition(host)
 			ho = cfg.Hosts[h]
-			hosts = append(hosts, ho.Ip+":"+ho.Port)
+			hosts = append(hosts, ho.IP+":"+ho.Port)
 		}
 		workingDir = cfg.Apps[a].Dir
 	}
 	if len(host) > 0 {
-		rp := regexp.MustCompile(ValidIpAddressRegex)
+		rp := regexp.MustCompile(ValidIPAddressRegex)
 		var addr string
 		if rp.MatchString(host) {
 			addr = host
 		} else {
-			err, h := cfg.findHostPosition(host)
+			h, err := cfg.findHostPosition(host)
 			if err != nil {
 				return err
 			}
-			addr = cfg.Hosts[h].Ip + ":" + cfg.Hosts[h].Port
+			addr = cfg.Hosts[h].IP + ":" + cfg.Hosts[h].Port
 		}
 		if len(app) > 0 {
 			hosts = []string{addr}
@@ -146,18 +164,6 @@ func showHelpAction(c *cli.Context) error {
 	return nil
 }
 
-var ListHostTemplate = `UID{{"\t\t\t"}}IP{{"\t\t\t"}}PORT{{range .Hosts}}
-{{.Uid}}{{"\t\t\t"}}{{.Ip}}{{"\t\t\t"}}{{.Port}}{{end}}
-`
-
-var ListHostTeplateQuiet = `{{range .Hosts}}{{.Uid}}{{"\n"}}{{end}}`
-
-var ListAppTemplate = `NAME{{"\t\t\t"}}DIR{{"\t\t\t"}}HOSTS{{range .Apps}}
-{{.Name}}{{"\t\t\t"}}{{.Dir}}{{"\t\t\t"}}{{join .Hosts ", "}}{{end}}
-`
-
-var ListAppTeplateQuiet = `{{range .Apps}}{{.Name}}{{"\n"}}{{end}}`
-
 func listHosts(c *cli.Context) error {
 	return list(ListHostTemplate, ListHostTeplateQuiet)
 }
@@ -222,19 +228,19 @@ func removeHost(c *cli.Context) error {
 func createHost(c *cli.Context) error {
 	args := c.Args()
 	host := Host{
-		Ip:   args.Get(0),
+		IP:   args.Get(0),
 		Port: args.Get(1),
 	}
-	if len(host.Ip) == 0 || len(host.Port) == 0 {
+	if len(host.IP) == 0 || len(host.Port) == 0 {
 		return cli.ShowSubcommandHelp(c)
 	}
 	cfg := LoadConfig()
-	err, h := cfg.addHost(host)
+	h, err := cfg.addHost(host)
 	if err != nil {
 		return err
 	}
 	cfg.saveConfigToDisk()
-	fmt.Println(h.Uid)
+	fmt.Println(h.UID)
 	return nil
 }
 

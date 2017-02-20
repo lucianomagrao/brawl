@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/urfave/cli"
 	"os"
 	"sort"
+
+	"github.com/urfave/cli"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "brawl"
-	app.Version = "1.0.1"
+	app.Version = "1.0.2"
 	app.Usage = "Deploy de aplicações docker."
 
 	app.Authors = []cli.Author{
