@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	workingDir, host, certsPath, app string
-	quiet, insecure                  bool
+	workingDir, host, certsPath string
+	insecure, force, all        bool
 )
 
 func getFlags() []cli.Flag {
@@ -26,11 +26,6 @@ func getFlags() []cli.Flag {
 			Destination: &host,
 		},
 		cli.StringFlag{
-			Name:        "app, a",
-			Usage:       "Define o app a ser utilizado",
-			Destination: &app,
-		},
-		cli.StringFlag{
 			Name:        "certs, c",
 			Usage:       "Caminho onde contem os arquivos de certificado e key para acesso ao Host definido",
 			Destination: &certsPath,
@@ -43,12 +38,17 @@ func getFlags() []cli.Flag {
 	}
 }
 
-func getLsFlags() []cli.Flag {
+func getDeployTeardownFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:        "q",
-			Usage:       "Lista somente ips dos hosts",
-			Destination: &quiet,
+			Name:        "force, f",
+			Usage:       "Ignora confirmação da ação de deploy",
+			Destination: &force,
+		},
+		cli.BoolFlag{
+			Name:        "all, a",
+			Usage:       "Define se deve ser feito deploy em todos nodes",
+			Destination: &all,
 		},
 	}
 }
@@ -67,4 +67,12 @@ func getWorkingDir() string {
 		log.Fatalf("Diretório informado não existe: %v", workingDir)
 	}
 	return workingDir
+}
+
+func getCertsPath() string {
+	_, err := os.Stat(certsPath)
+	if os.IsNotExist(err) {
+		log.Fatalf("Diretório informado não existe: %v", certsPath)
+	}
+	return certsPath
 }

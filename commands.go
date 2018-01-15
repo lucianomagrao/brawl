@@ -25,7 +25,16 @@ func getCommands() []cli.Command {
 			Usage:     "Inicia o deploy da aplicação",
 			ArgsUsage: "[app]",
 			Before:    defineDockerHostCommand,
+			Flags:     getDeployTeardownFlags(),
 			Action:    deployAction,
+		},
+		{
+			Name:      "teardown",
+			Usage:     "Destroi o ambiente da aplicação",
+			ArgsUsage: "[app]",
+			Before:    defineDockerHostCommand,
+			Flags:     getDeployTeardownFlags(),
+			Action:    tearDownAction,
 		},
 		{
 			Name:   "update-images",
@@ -35,83 +44,17 @@ func getCommands() []cli.Command {
 		},
 		{
 			Name:            "docker",
-			Usage:           "Executa comandos docker na maquina definida como Host",
+			Usage:           "Executa comandos docker no node definido como Host",
 			SkipFlagParsing: true,
 			Before:          defineDockerHostCommand,
 			Action:          executeDockerCmd,
 		},
 		{
 			Name:            "compose",
-			Usage:           "Executa comandos compose na maquina definida como Host",
+			Usage:           "Executa comandos compose no node definido como Host",
 			SkipFlagParsing: true,
 			Before:          defineDockerHostCommand,
 			Action:          executeDockerComposeCmd,
-		},
-		{
-			Name:  "host",
-			Usage: "Gerencia hosts",
-			Subcommands: []cli.Command{
-				{
-					Name:   "ls",
-					Usage:  "Lista hosts cadastrados",
-					Action: listHosts,
-					Flags:  getLsFlags(),
-				},
-				{
-					Name:      "rm",
-					ArgsUsage: "[hosts...]",
-					Usage:     "Remove host",
-					Action:    removeHost,
-				},
-				{
-					Name:      "create",
-					ArgsUsage: "[ip] [porta]",
-					Usage:     "Cria novo host",
-					Action:    createHost,
-				},
-			},
-		},
-		{
-			Name:  "app",
-			Usage: "Gerencia apps",
-			Subcommands: []cli.Command{
-				{
-					Name:   "ls",
-					Usage:  "Lista apps cadastrados",
-					Action: listApps,
-					Flags:  getLsFlags(),
-				},
-				{
-					Name:      "rm",
-					ArgsUsage: "[apps...]",
-					Usage:     "Remove apps",
-					Action:    removeApp,
-				},
-				{
-					Name:      "create",
-					ArgsUsage: "[name] [dir]",
-					Usage:     "Cria novo app",
-					Action:    createApp,
-				},
-				{
-					Name:  "manage",
-					Usage: "Gerencia app",
-					Subcommands: []cli.Command{
-						{
-							Name:      "add-host",
-							ArgsUsage: "[app] [host]",
-							Usage:     "Adiciona host ao app",
-							Action:    addHostToApp,
-						},
-						{
-							Name:      "rm-host",
-							ArgsUsage: "[app] [host]",
-							Usage:     "Remove host do app",
-							Action:    removeHostFromApp,
-						},
-					},
-				},
-			},
 		},
 		{
 			Name:   "versions",
